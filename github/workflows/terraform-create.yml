@@ -1,0 +1,48 @@
+# Permite crear la infraestructura de Terraform en AWS
+name: Terraform Create AWS Infra
+
+on:
+  # Configuramos que solo se pueda ejecutar manualmente
+  workflow_dispatch:
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+# Ejecución de los trabajos
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+       
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        
+      # Iniciar Terraform en el repositorio
+      - name: Terraform Init
+        id: init
+        run: terraform init
+      
+      # Planifica el código para su ejecución
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -var-file="actrafer.tfvars"
+      
+      # Crear infraestructura en AWS
+      - name: Terraform Apply
+        id: apply
+        run: terraform apply -var-file="actrafer.tfvars" -auto-approve
+        
+      # Creamos artifact para subir fichero terraform.tfstate
+      - name: Subida terraform.tfstate
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-state
+          path: terraform.tfstate
+        
+      # Descargamos artifact
+      - name: Descarga terraform.tfstate
+        uses: actions/download-artifact@v3
